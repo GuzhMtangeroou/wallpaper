@@ -18,6 +18,7 @@ import sys
 import time
 import winreg
 
+import webbrowser
 import coloredlogs
 import pystray
 import win32con
@@ -29,8 +30,14 @@ from pystray import MenuItem, Menu
 from ttkbootstrap.dialogs import Messagebox
 
 exit_flag: bool = False
+p: str = sys.executable
 
 
+#重启
+def restart_program():
+  logging.warning("################程序重启################")
+  os.execl(p, p, * sys.argv)
+  
 # 退出检测
 @atexit.register
 def at_exit_fun():
@@ -79,9 +86,9 @@ except FileNotFoundError:
         # 保存
         yaml.dump(data=config, stream=f, allow_unicode=True)
 
-    logging.info("配置文件读取失败, \n新的配置文件已生成在%s路径下！")
-    Messagebox.show_info("配置文件读取失败, \n新的配置文件已生成在%s路径下！" % config_path, title="WallPaper")
-    stop_()
+    logging.info("未检测到配置文件, \n新的配置文件已生成在%s路径下！")
+    Messagebox.show_info("配置文件读取失败, \n新的配置文件已生成在%s路径下，即将自动重启......" % config_path, title="WallPaper")
+    restart_program()
 
 # 检查配置文件是否完整
 if ("adaptive" in config and "disable_audio" in config and
@@ -103,9 +110,11 @@ if ("adaptive" in config and "disable_audio" in config and
             Messagebox.show_error("禁用音频配置必须是布尔类型, 如果不知道如何修复, 请尝试删除配置文件", title="WallPaper")
         stop_()
     if not os.path.exists(config["video"]) or not os.path.isfile(config["video"]):
-        logging.error("视频文件路径不存在/不正确, 如果不知道如何修复, 请尝试删除配置文件")
+        logging.error("视频文件路径不存在/不正确, 正在尝试删除配置文件并重启")
         if config["pop_up_warnings"]:
-            Messagebox.show_error("视频文件路径不存在/不正确, 如果不知道如何修复, 请尝试删除配置文件", title="WallPaper")
+            Messagebox.show_error("视频文件路径不存在/不正确, 正在尝试删除配置文件并重启......", title="WallPaper")
+            os.remove("config.yml")
+            restart_program()
         
 else:
     logging.error("配置文件中有项缺失, 请尝试删除配置文件后重新运行")
@@ -247,10 +256,13 @@ def reboot_ffplay() -> None:
     os.system('"taskkill /F /IM ffplay.exe"')
     display()
 
+def turn_to_github():
+    webbrowser.open("https://github.com/GuzhMtangeroou/wallpaper")
+
 
 # 托盘菜单
-menu: tuple = (MenuItem('添加自启动', lambda: add_to_startup()), MenuItem('重启ffplay', lambda: reboot_ffplay()),
-               MenuItem('退出', lambda: stop_()), Menu.SEPARATOR, MenuItem("By:Xiaosu", None))
+menu: tuple = (MenuItem('添加开机自启', lambda: add_to_startup()), MenuItem('重启ffplay', lambda: reboot_ffplay()),
+               MenuItem('退出', lambda: stop_()), Menu.SEPARATOR, MenuItem("Github", turn_to_github))
 
 image: Image = Image.open(os.path.join(path, "wallpaper.ico"))
 
