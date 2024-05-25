@@ -35,7 +35,7 @@ p: str = sys.executable
 
 #重启
 def restart_program():
-  logging.warning("################程序重启################")
+  logging.warning("################RESTART################")
   os.execl(p, p, * sys.argv)
   
 # 退出检测
@@ -78,7 +78,7 @@ except FileNotFoundError:
     logging.warning("配置文件读取失败")
     with open(config_path, "w", encoding="utf-8") as f:
         config: dict = {
-            "video": os.path.join(path, "TestWallpaperVideo", "nahida.webm"),
+            "video": os.path.join(path, "Video", "nahida.webm"),
             "adaptive": True,
             "disable_audio": False,
             "pop_up_warnings": True
@@ -87,7 +87,7 @@ except FileNotFoundError:
         yaml.dump(data=config, stream=f, allow_unicode=True)
 
     logging.info("未检测到配置文件, \n新的配置文件已生成在%s路径下！")
-    Messagebox.show_info("配置文件读取失败, \n新的配置文件已生成在%s路径下，即将自动重启......" % config_path, title="WallPaper")
+    Messagebox.show_info("配置文件读取失败,它可能损坏或不存在\n已在%s生成新的配置文件，即将自动重启......" % config_path, title="WallPaper")
     restart_program()
 
 # 检查配置文件是否完整
