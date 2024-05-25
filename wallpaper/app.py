@@ -1,13 +1,7 @@
 # coding:utf-8
-"""
-本代码遵守GPLv3.0开源
+#本代码遵守GPLv3.0开源
+#代码修改自 Github @Asankilp (https://github.com/Asankilp/PyWallpaperEngine(修改自 Bilibili @偶尔有点小迷糊 (https://b23.tv/BV1HZ4y1978a))与Github @BtbN (https://github.com/BtbN/FFmpeg-Builds)
 
-特别鸣谢
-代码修改自 Github @Asankilp (https://github.com/Asankilp/PyWallpaperEngine)
-    (他的代码修改自 Bilibili @偶尔有点小迷糊 (https://b23.tv/BV1HZ4y1978a))
-与
-Github @BtbN (https://github.com/BtbN/FFmpeg-Builds)
-"""
 
 import atexit
 import json
@@ -34,7 +28,7 @@ p: str = sys.executable
 
 
 #重启
-def restart_program():
+def restart():
   logging.warning("################RESTART################")
   os.execl(p, p, * sys.argv)
   
@@ -62,7 +56,7 @@ def stop_():
 
 # 设置终端日志
 coloredlogs.install(level='INFO', fmt='[%(levelname)s] [%(asctime)s]: %(message)s')
-logging.info("日志设置成功, Wallpaper开始运行")
+logging.info("日志设置成功")
 
 path: str = os.path.dirname(os.path.realpath(sys.argv[0]))
 config_path: str = os.path.join(path, "config.yml")
@@ -78,7 +72,7 @@ except FileNotFoundError:
     logging.warning("配置文件读取失败")
     with open(config_path, "w", encoding="utf-8") as f:
         config: dict = {
-            "video": os.path.join(path, "Video", "nahida.webm"),
+            "video": os.path.join(path, "Video", "video.webm"),
             "adaptive": True,
             "disable_audio": False,
             "pop_up_warnings": True
@@ -86,41 +80,38 @@ except FileNotFoundError:
         # 保存
         yaml.dump(data=config, stream=f, allow_unicode=True)
 
-    logging.info("未检测到配置文件, \n新的配置文件已生成在%s路径下！")
-    Messagebox.show_info("配置文件读取失败,它可能损坏或不存在\n已在%s生成新的配置文件，即将自动重启......" % config_path, title="WallPaper")
-    restart_program()
+    logging.info("未检测到配置文件，已生成新文件（位于%s）")
+    restart()
 
 # 检查配置文件是否完整
 if ("adaptive" in config and "disable_audio" in config and
         "video" in config and "pop_up_warnings" in config):
     
     if not isinstance(adaptive := config["pop_up_warnings"], bool):
-        logging.error("警告弹窗的配置必须是布尔类型, 如果不知道如何修复, 请尝试删除配置文件")
-        Messagebox.show_error("警告弹窗的配置必须是布尔类型, 如果不知道如何修复, 请尝试删除配置文件", title="WallPaper")
-        stop_()
-    
+        logging.error("警告弹窗的配置必须是布尔类型, 正在自动处理错误......")
+        os.remove("config.yml")
+        restart()    
     if not isinstance(adaptive := config["adaptive"], bool):
-        logging.error("自适应窗口的配置必须是布尔类型, 如果不知道如何修复, 请尝试删除配置文件")
+        logging.error("自适应窗口的配置必须是布尔类型, 正在自动处理错误......")
         if config["pop_up_warnings"]:
-            Messagebox.show_error("禁用音频配置必须是布尔类型, 如果不知道如何修复, 请尝试删除配置文件", title="WallPaper")
-        stop_()
-    if not isinstance(disable_audio := config["disable_audio"], bool):
-        logging.error("禁用音频配置必须是布尔类型, 如果不知道如何修复, 请尝试删除配置文件")
-        if config["pop_up_warnings"]:
-            Messagebox.show_error("禁用音频配置必须是布尔类型, 如果不知道如何修复, 请尝试删除配置文件", title="WallPaper")
-        stop_()
-    if not os.path.exists(config["video"]) or not os.path.isfile(config["video"]):
-        logging.error("视频文件路径不存在/不正确, 正在尝试删除配置文件并重启")
-        if config["pop_up_warnings"]:
-            Messagebox.show_error("视频文件路径不存在/不正确, 正在尝试删除配置文件并重启......", title="WallPaper")
             os.remove("config.yml")
-            restart_program()
+            restart()
+    if not isinstance(disable_audio := config["disable_audio"], bool):
+        logging.error("禁用音频配置必须是布尔类型, 正在自动处理错误......")
+        if config["pop_up_warnings"]:
+            os.remove("config.yml")
+            restart()
+    if not os.path.exists(config["video"]) or not os.path.isfile(config["video"]):
+        logging.error("视频文件路径不存在/不正确, 正在自动处理错误......")
+        if config["pop_up_warnings"]:
+            os.remove("config.yml")
+            restart()
         
 else:
-    logging.error("配置文件中有项缺失, 请尝试删除配置文件后重新运行")
+    logging.error("配置文件中有项缺失, 正在自动处理错误......")
     if "pop_up_warnings" in config and config["pop_up_warnings"]:
-        Messagebox.show_error("配置文件中有项缺失, 请尝试删除配置文件后重新运行", title="WallPaper")
-    stop_()
+        os.remove("config.yml")
+        restart()
 
 logging.info("配置文件读取成功")
 
@@ -209,11 +200,10 @@ def display() -> None:
         time.sleep(0.1)
         flag += 1
         if flag >= 30:
-            logging.error("ffpaly疑似启动失败, 请重启测试, 若依旧失败请修改配置文件测试！")
+            logging.error("ffpaly可能启动失败, 即将自行修复, 若依旧失败请修改配置文件测试！")
             if config["pop_up_warnings"]:
-                Messagebox.show_error("ffpaly疑似启动失败, 请重启测试, 若依旧失败请修改配置文件测试！",
-                                      title="WallPaper")
-            stop_()
+                os.remove("config.yml")
+                restart()
     logging.info("ffplay播放器启动成功！")
     video_win: int = win32gui.FindWindow("SDL_app", None)
     logging.debug(f"已寻找到ffplay播放器窗口, 窗口句柄为0x{video_win:08X}")
@@ -261,10 +251,10 @@ def turn_to_github():
 
 
 # 托盘菜单
-menu: tuple = (MenuItem('添加开机自启', lambda: add_to_startup()), MenuItem('重启ffplay', lambda: reboot_ffplay()),
+menu: tuple = (MenuItem('添加开机自启', lambda: add_to_startup()), MenuItem('重启播放器', lambda: reboot_ffplay()),
                MenuItem('退出', lambda: stop_()), Menu.SEPARATOR, MenuItem("Github", turn_to_github))
 
 image: Image = Image.open(os.path.join(path, "wallpaper.ico"))
 
-icon: pystray.Icon = pystray.Icon("name", title="WallPaper", icon=image, menu=menu)
+icon: pystray.Icon = pystray.Icon("name", title="动态壁纸", icon=image, menu=menu)
 icon.run()
